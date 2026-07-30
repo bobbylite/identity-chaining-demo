@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm uninstall *)",
+      "Bash(nohup npm run dev -- --port 5183)",
+      "Bash(disown)",
+      "Read(//tmp/**)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(python3 -c \"import playwright\")",
+      "Read(//Users/bobby/.cache/**)",
+      "Bash(curl -sf http://localhost:5183/identity-chaining-demo/)",
+      "Bash(npx --no-install playwright install chromium --with-deps)",
+      "Bash(mkdir -p /private/tmp/claude-501/-Users-bobby-source-repos-identity-chaining-demo/26e517b5-ef14-4513-9931-aac2f73d628a/scratchpad/pw-test)",
+      "Bash(npm init *)",
+      "Bash(npx playwright *)",
+      "Bash(ls ~/Library/Caches/ms-playwright 2>&1)",
+      "Read(//Users/bobby/Library/Caches/ms-playwright/**)",
+      "Bash(mkdir -p /private/tmp/claude-501/-Users-bobby-source-repos-identity-chaining-demo/26e517b5-ef14-4513-9931-aac2f73d628a/scratchpad/shots)",
+      "Bash(node shot.mjs)",
+      "Bash(node shot2.mjs)",
+      "Bash(node shot3.mjs)",
+      "Bash(lsof -ti:5183 -sTCP:LISTEN)",
+      "Bash(xargs -r kill)",
+      "Bash(node shot4.mjs)",
+      "Bash(lsof -ti:5184 -sTCP:LISTEN)",
+      "Bash(rm -f /tmp/vite-dev.log /tmp/vite-preview.log)"
+    ]
+  }
+}
