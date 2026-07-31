@@ -31,7 +31,7 @@ export const CONTRASTS: Contrast[] = [
     without:
       'Usually a shared service account. The audit log says "integration-bot", so you cannot tell which employee triggered what.',
     with:
-      'The user. sub carries the person end to end and act names the agent, so the log reads "this agent, acting for Priya".',
+      'The user. sub carries the person end to end and act names the agent, so the log reads "this agent, acting for Ryland".',
   },
   {
     id: 'blast',

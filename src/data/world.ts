@@ -44,11 +44,11 @@ export interface ResourceApp {
 }
 
 export const USER = {
-  name: 'Priya Natarajan',
-  sub: 'priya.natarajan@contoso.example',
+  name: 'Ryland Grace',
+  sub: 'ryland.grace@contoso.example',
   title: 'Enterprise Account Executive',
   org: 'Contoso',
-  initials: 'PN',
+  initials: 'RG',
 }
 
 export const AGENT = {
@@ -104,7 +104,7 @@ export const APPS: Record<AppId, ResourceApp> = {
       close_date: '2026-08-14',
       risk: 'at_risk',
     },
-    because: 'to find the renewal Priya is asking about',
+    because: 'to find the renewal Ryland is asking about',
   },
   files: {
     id: 'files',

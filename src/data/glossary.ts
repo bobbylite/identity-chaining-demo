@@ -25,7 +25,7 @@ export const CLAIMS: Record<string, Entry> = {
   },
   act: {
     term: 'act — actor',
-    text: 'Who is acting on the subject’s behalf. It records delegation: the user is the subject, the agent is merely the actor. Strip it and you lose the ability to tell "Priya did this" from "a bot did this as Priya".',
+    text: 'Who is acting on the subject’s behalf. It records delegation: the user is the subject, the agent is merely the actor. Strip it and you lose the ability to tell "Ryland did this" from "a bot did this as Ryland".',
     key: true,
   },
   scope: {

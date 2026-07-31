@@ -17,7 +17,7 @@ It covers both flavours of the same idea, on the identical scenario, switchable 
 
 ## The scenario
 
-Priya asks Contoso's internal agent one question about a stuck renewal. Answering it
+Ryland asks Contoso's internal agent one question about a stuck renewal. Answering it
 means reaching into four separate SaaS trust domains — Salesforce, Google Drive, Jira
 and ServiceNow — each with its own authorization server and its own MCP server. The
 agent holds no credential for any of them.

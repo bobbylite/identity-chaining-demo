@@ -329,7 +329,7 @@ export function buildRun(
     dir: 'out',
     crosses: false,
     narrative: xaa
-      ? `${USER.name} signed into ${AGENT.name} through ${IDP.name} this morning — ordinary enterprise SSO, no new prompt. ${AGENT.name} is holding a signed ID token that says who she is. Notice what it is not: it is not a ${app.name} credential, and it grants nothing in ${app.name}'s trust domain.`
+      ? `${USER.name} signed into ${AGENT.name} through ${IDP.name} this morning — ordinary enterprise SSO, no new prompt. ${AGENT.name} is holding a signed ID token that says who they are. Notice what it is not: it is not a ${app.name} credential, and it grants nothing in ${app.name}'s trust domain.`
       : `${AGENT.name} is holding an access token ${IDP.name} issued for its own API. That token proves ${USER.name} is behind this session, but its audience is ${IDP.name}'s own trust domain. Presenting it to ${app.name} would be meaningless — and if ${app.name} did accept it, a single stolen token would unlock everything.`,
     spec: {
       ...(xaa ? SPECS.idjag : SPECS.chaining),
