@@ -1,29 +1,30 @@
 // Fully client-side, fully fake JWT simulation. No signing, no crypto, no network.
 // Structurally identical to a real JWT (base64url(header).base64url(payload).signature)
-// so it decodes exactly like a real one would — the *signature* segment is a inert
+// so it decodes exactly like a real one would — the *signature* segment is an inert
 // placeholder string, never a real cryptographic signature.
 
 export interface JwtHeader {
   alg: string
-  typ: 'JWT'
+  typ: string
   kid: string
 }
 
 export interface ActorClaim {
   sub: string
-  iss: string
+  iss?: string
+  client_id?: string
 }
 
 export interface JwtPayload {
   iss: string
   sub: string
   aud: string
-  scope?: string
-  act?: ActorClaim
-  client_id?: string
   iat: number
   exp: number
   jti: string
+  scope?: string
+  act?: ActorClaim
+  client_id?: string
   [key: string]: unknown
 }
 
@@ -57,16 +58,21 @@ function mulberry32(seed: number) {
   }
 }
 
-function fakeSignature(seed: string): string {
+function hashString(seed: string): number {
   let hash = 0
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
   }
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
-  const rand = mulberry32(hash || 1)
+  return hash
+}
+
+const SIG_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
+
+function fakeSignature(seed: string, length = 43): string {
+  const rand = mulberry32(hashString(seed) || 1)
   let out = ''
-  for (let i = 0; i < 43; i++) {
-    out += chars[Math.floor(rand() * chars.length)]
+  for (let i = 0; i < length; i++) {
+    out += SIG_CHARS[Math.floor(rand() * SIG_CHARS.length)]
   }
   return out
 }
@@ -95,8 +101,42 @@ export function decodeJwt(token: string): DecodedJwt {
   }
 }
 
+/**
+ * Re-encode a token's payload with `patch` applied while keeping the ORIGINAL
+ * signature segment. That is exactly what a holder of a bearer token can do: the
+ * payload is only base64url-encoded, not encrypted. The result is a structurally
+ * valid JWT whose signature no longer matches its payload — which is the entire
+ * point of the demo's "tampered payload" condition.
+ */
+export function tamperJwt(token: string, patch: Record<string, unknown>): string {
+  const { header, payload, raw } = decodeJwt(token)
+  const nextPayload = { ...payload, ...patch }
+  const h = base64url(JSON.stringify(header))
+  const p = base64url(JSON.stringify(nextPayload))
+  return `${h}.${p}.${raw.signature}`
+}
+
+/** True when the signature segment matches what this (simulated) issuer would have produced. */
+export function signatureIsValid(token: string): boolean {
+  const [h, p, s] = token.split('.')
+  return fakeSignature(h + p) === s
+}
+
+/** Short, stable, human-comparable id for a token — used on chips and diff headers. */
+export function fingerprint(token: string): string {
+  return fakeSignature(token, 8).toLowerCase()
+}
+
 let counter = 0
 export function jti(prefix: string): string {
   counter += 1
-  return `${prefix}-${Date.now().toString(36)}-${counter.toString(36)}`
+  return `${prefix}_${Date.now().toString(36)}${counter.toString(36)}`
+}
+
+/** Compact display form: first/last few characters of each segment. */
+export function abbreviate(token: string, keep = 6): string {
+  return token
+    .split('.')
+    .map((seg) => (seg.length <= keep * 2 + 1 ? seg : `${seg.slice(0, keep)}…${seg.slice(-keep)}`))
+    .join('.')
 }

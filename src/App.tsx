@@ -1,136 +1,111 @@
-import { useEffect, useState } from 'react'
-import ScenarioIntro from './components/ScenarioIntro'
-import FlowDiagram from './components/FlowDiagram'
-import AgentChatPanel from './components/AgentChatPanel'
-import StepNarration from './components/StepNarration'
-import NetworkPanel from './components/NetworkPanel'
-import JwtViewer from './components/JwtViewer'
-import Timeline from './components/Timeline'
-import SpecCompare from './components/SpecCompare'
-import { STEPS, TOOLS } from './data/scenario'
-
-type Tab = 'network' | 'token'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import TopBar from './components/TopBar'
+import Hero from './components/Hero'
+import Contrasts from './components/Contrasts'
+import Walkthrough from './components/Walkthrough'
+import LabPanel from './components/LabPanel'
+import Pillars from './components/Pillars'
+import Faq from './components/Faq'
+import Footer from './components/Footer'
+import { useTheme } from './lib/useTheme'
+import { buildRun, DEFAULT_POLICY, type Condition, type Policy, type Profile } from './data/protocol'
+import type { AppId } from './data/world'
 
 export default function App() {
-  const [screen, setScreen] = useState<'intro' | 'demo'>('intro')
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState(3200)
-  const [specOpen, setSpecOpen] = useState(false)
-  const [tab, setTab] = useState<Tab>('network')
+  const { choice, setTheme } = useTheme()
 
-  const step = STEPS[currentIndex]
-  const tool = TOOLS[step.phase]
+  const [appId, setAppId] = useState<AppId>('crm')
+  const [profile, setProfile] = useState<Profile>('xaa')
+  const [condition, setCondition] = useState<Condition>('none')
+  const [policy, setPolicy] = useState<Policy>(DEFAULT_POLICY)
+  const [index, setIndex] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [speed, setSpeed] = useState(2600)
+
+  const run = useMemo(
+    () => buildRun(appId, profile, condition, policy),
+    [appId, profile, condition, policy],
+  )
+
+  // Any change to what we're simulating restarts the walkthrough at step 1.
+  useEffect(() => {
+    setIndex(0)
+    setPlaying(false)
+  }, [appId, profile, condition, policy])
 
   useEffect(() => {
     if (!playing) return
-    if (currentIndex >= STEPS.length - 1) {
+    if (index >= run.steps.length - 1) {
       setPlaying(false)
       return
     }
-    const t = setTimeout(() => setCurrentIndex((i) => Math.min(STEPS.length - 1, i + 1)), speed)
+    const t = setTimeout(() => setIndex((i) => Math.min(run.steps.length - 1, i + 1)), speed)
     return () => clearTimeout(t)
-  }, [playing, speed, currentIndex])
+  }, [playing, index, speed, run.steps.length])
 
-  useEffect(() => {
-    if (!step.token && tab === 'token') setTab('network')
-  }, [step, tab])
+  const togglePlay = useCallback(() => {
+    setPlaying((p) => {
+      if (!p && index >= run.steps.length - 1) setIndex(0)
+      return !p
+    })
+  }, [index, run.steps.length])
 
+  // Keyboard scrubbing, but never while the user is inside a form control.
   useEffect(() => {
-    if (screen !== 'demo') return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') setCurrentIndex((i) => Math.min(STEPS.length - 1, i + 1))
-      if (e.key === 'ArrowLeft') setCurrentIndex((i) => Math.max(0, i - 1))
-      if (e.key === ' ') {
+      const el = document.activeElement
+      if (el instanceof HTMLSelectElement || el instanceof HTMLInputElement) return
+      if (e.key === 'ArrowRight') {
+        setIndex((i) => Math.min(run.steps.length - 1, i + 1))
+        setPlaying(false)
+      } else if (e.key === 'ArrowLeft') {
+        setIndex((i) => Math.max(0, i - 1))
+        setPlaying(false)
+      } else if (e.key === ' ' && !(el instanceof HTMLButtonElement)) {
         e.preventDefault()
-        setPlaying((p) => !p)
+        togglePlay()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [screen])
+  }, [run.steps.length, togglePlay])
 
-  if (screen === 'intro') {
-    return <ScenarioIntro onStart={() => setScreen('demo')} />
-  }
-
-  const reset = () => {
-    setCurrentIndex(0)
-    setPlaying(false)
-  }
-
-  const togglePlay = () => {
-    if (currentIndex >= STEPS.length - 1) {
-      setCurrentIndex(0)
-      setPlaying(true)
-    } else {
-      setPlaying((p) => !p)
-    }
-  }
+  const pickApp = useCallback((id: AppId) => {
+    setAppId(id)
+    document.getElementById('walkthrough')?.scrollIntoView({ block: 'start' })
+  }, [])
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div className="app-header-title">
-          <span className="app-header-dot" />
-          Identity Chaining, Live
-        </div>
-        <div className="app-header-actions">
-          <button className="header-btn" onClick={() => setSpecOpen(true)} type="button">
-            Compare to spec
-          </button>
-          <a
-            className="header-btn"
-            href="https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-chaining/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            View draft ↗
-          </a>
-        </div>
-      </header>
-
-      <FlowDiagram step={step} tool={tool} />
-
-      <Timeline
-        currentIndex={currentIndex}
-        playing={playing}
-        speed={speed}
-        onSetIndex={(i) => {
-          setCurrentIndex(i)
-          setPlaying(false)
-        }}
-        onTogglePlay={togglePlay}
-        onSetSpeed={setSpeed}
-        onReset={reset}
-      />
-
-      <main className="app-main">
-        <AgentChatPanel currentIndex={currentIndex} />
-
-        <div className="detail-panel">
-          <StepNarration step={step} tool={tool} />
-          <div className="detail-tabs">
-            <button className={`detail-tab${tab === 'network' ? ' detail-tab-active' : ''}`} onClick={() => setTab('network')} type="button">
-              Network
-            </button>
-            <button
-              className={`detail-tab${tab === 'token' ? ' detail-tab-active' : ''}`}
-              onClick={() => setTab('token')}
-              disabled={!step.token}
-              type="button"
-            >
-              Decoded token
-            </button>
-          </div>
-          <div className="detail-body">
-            {tab === 'network' && <NetworkPanel step={step} />}
-            {tab === 'token' && step.token && <JwtViewer label={step.token.label} value={step.token.value} />}
-          </div>
-        </div>
+    <>
+      <TopBar profile={profile} onProfile={setProfile} theme={choice} onTheme={setTheme} />
+      <main>
+        <Hero profile={profile} onPick={pickApp} />
+        <Contrasts />
+        <Walkthrough
+          run={run}
+          appId={appId}
+          onApp={setAppId}
+          profile={profile}
+          onProfile={setProfile}
+          condition={condition}
+          onCondition={setCondition}
+          policy={policy}
+          onPolicy={(id, allowed) => setPolicy((p) => ({ ...p, [id]: allowed }))}
+          index={index}
+          onIndex={(i) => {
+            setIndex(i)
+            setPlaying(false)
+          }}
+          playing={playing}
+          onPlay={togglePlay}
+          speed={speed}
+          onSpeed={setSpeed}
+        />
+        <LabPanel condition={condition} onCondition={setCondition} run={run} />
+        <Pillars profile={profile} />
+        <Faq />
       </main>
-
-      <SpecCompare open={specOpen} step={step} onClose={() => setSpecOpen(false)} />
-    </div>
+      <Footer />
+    </>
   )
 }
